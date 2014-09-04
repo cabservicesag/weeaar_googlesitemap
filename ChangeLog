@@ -1,3 +1,9 @@
+2014-09-04 Jonas Felix <jf@cabag.ch>
+	* version 0.4.4
+	* Security fix typo3-ext-sa-2014-010
+	* Minor cleanups
+	* fixes potential sql injection in backend
+
 07-04-30 Marcel Alburg  <alb@weeaar.com>
 	* Bugfix for single language projects (Thanks to Martin Scholl [ms@globalinfinity.de])
 

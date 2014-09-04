@@ -15,8 +15,8 @@ $EM_CONF[$_EXTKEY] = array(
 	'description' => 'create a xml sitemap for google',
 	'category' => 'plugin',
 	'shy' => 0,
-	'version' => '0.4.3',
-	'dependencies' => '',
+	'version' => '0.4.4',
+	'dependencies' => 'cms',
 	'conflicts' => '',
 	'priority' => '',
 	'loadOrder' => '',
@@ -34,6 +34,8 @@ $EM_CONF[$_EXTKEY] = array(
 	'CGLcompliance_note' => '',
 	'constraints' => array(
 		'depends' => array(
+			'cms' => '',
+			'typo3' => '4.5.0-4.7.99',
 		),
 		'conflicts' => array(
 		),
