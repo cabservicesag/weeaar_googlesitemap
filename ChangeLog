@@ -1,3 +1,6 @@
+2014-11-19 Daniel Neugebauer <dneuge@glutrot.de>
+    * check for new parameter tt_news.single_page.*.keepListedAsPage to keep single view pages listed
+
 2014-09-04 Jonas Felix <jf@cabag.ch>
 	* version 0.4.4
 	* Security fix typo3-ext-sa-2014-010
