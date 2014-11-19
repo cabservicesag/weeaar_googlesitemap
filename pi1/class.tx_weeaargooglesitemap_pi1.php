@@ -50,7 +50,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 	var $url;
 	var $usedSites = array();
 	var $allowedDoktypes = array(2, 1);
-	var $newsSinglePages = array();
+	var $excludedPages = array();
 	var $localizedIds = array();
 	var $languageParamIf0 = TRUE;
 	var $validCode = array('google', 'sitemap_org');
@@ -298,7 +298,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 	}
 
 	function generateItem($pages_row, $id_name = 'uid') {
-		if (!$this->data[$pages_row[$id_name]][0] == 1 && count($pages_row) > 0 && (!in_array($pages_row[$id_name], $this->usedSites) || isset($pages_row["sys_language_uid"])) && (in_array($pages_row['doktype'], $this->allowedDoktypes) || isset($pages_row["sys_language_uid"]) ) && !in_array($pages_row[$id_name], $this->newsSinglePages)) {
+		if (!$this->data[$pages_row[$id_name]][0] == 1 && count($pages_row) > 0 && (!in_array($pages_row[$id_name], $this->usedSites) || isset($pages_row["sys_language_uid"])) && (in_array($pages_row['doktype'], $this->allowedDoktypes) || isset($pages_row["sys_language_uid"]) ) && !in_array($pages_row[$id_name], $this->excludedPages)) {
 			$langID = (isset($pages_row["sys_language_uid"])) ? $pages_row["sys_language_uid"] : $this->sys_language_uid;
 
 			$link = (substr($link, 0, 1) == '/') ? substr($link, 1) : $link;
@@ -344,12 +344,27 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 			$this->data[$row['pid']] = array($row['disabled'], $row['priority'], $row['changefreq']);
 		}
 
-		/* get news single pages */
-
+		// check if configured tt_news single view pages should be excluded or
+		// kept
 		if (is_array($this->conf["tt_news."]["single_page."]) && count($this->conf["tt_news."]["single_page."]) > 0) {
-			foreach ($this->conf["tt_news."]["single_page."] as $no => $test) {
-				if (!strpos($no, ".")) {
-					$this->newsSinglePages[] = $test;
+			$singlePagesConfig = $this->conf["tt_news."]["single_page."];
+			foreach ($singlePagesConfig as $key => $singlePage) {
+				$isSinglePageConfigLeafNode = (strpos($key, ".") === false);
+				
+				// single pages are configured on parent level of detailed
+				// configuration, so we trigger on leaf nodes on first level
+				// beneath single_page
+				if ($isSinglePageConfigLeafNode) {
+					$shouldBeExcluded = true;
+					
+					$hasSubConfig = array_key_exists($key.'.', $singlePagesConfig);
+					if ($hasSubConfig) {
+						$shouldBeExcluded = !(array_key_exists('keepListedAsPage', $singlePagesConfig[$key.'.']) && ($singlePagesConfig[$key.'.']['keepListedAsPage'] != 0));
+					}
+					
+					if ($shouldBeExcluded) {
+						$this->excludedPages[] = $singlePage;
+					}
 				}
 			}
 		}
