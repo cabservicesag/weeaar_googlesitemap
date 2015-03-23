@@ -28,10 +28,14 @@
 unset($MCONF);
 require_once('conf.php');
 require_once($BACK_PATH . 'init.php');
-require_once($BACK_PATH . 'template.php');
+if (!class_exists('template')) {
+	require_once($BACK_PATH . 'template.php');
+}
 
 $LANG->includeLLFile('EXT:weeaar_googlesitemap/mod1/locallang.xml');
-require_once(PATH_t3lib . 'class.t3lib_scbase.php');
+if (!class_exists('t3lib_SCbase')) {
+	require_once(PATH_t3lib . 'class.t3lib_scbase.php');
+}
 $BE_USER->modAccess($MCONF, 1); // This checks permissions and exits if the users has no permission for entry.
 // DEFAULT initialization of a module [END]
 
@@ -108,8 +112,9 @@ class tx_weeaargooglesitemap_module1 extends t3lib_SCbase {
 								if (top.fsMod) top.fsMod.recentIds["web"] = 0;
 							</script>
 						';
-
-			$headerSection = $this->doc->getHeader('pages', $this->pageinfo, $this->pageinfo['_thePath']) . '<br />' . $LANG->sL('LLL:EXT:lang/locallang_core.xml:labels.path') . ': ' . t3lib_div::fixed_lgd_pre($this->pageinfo['_thePath'], 50);
+			
+			$pathCropped = method_exists('TYPO3\CMS\Core\Utility\GeneralUtility', 'fixed_lgd_cs') ? TYPO3\CMS\Core\Utility\GeneralUtility::fixed_lgd_cs($this->pageinfo['_thePath'], 50) : t3lib_div::fixed_lgd_pre($this->pageinfo['_thePath'], 50);
+			$headerSection = $this->doc->getHeader('pages', $this->pageinfo, $this->pageinfo['_thePath']) . '<br />' . $LANG->sL('LLL:EXT:lang/locallang_core.xml:labels.path') . ': ' . $pathCropped;
 
 			$this->content.=$this->doc->startPage($LANG->getLL('title'));
 			$this->content.=$this->doc->header($LANG->getLL('title'));
