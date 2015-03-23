@@ -13,3 +13,4 @@ Fixes
 -----
 
   * fix for security bulletin [TYPO3-EXT-SA-2014-010](http://typo3.org/teams/security/security-bulletins/typo3-extensions/typo3-ext-sa-2014-010/); credits to initiator of fork [cab services ag](https://github.com/cabservicesag/weeaar_googlesitemap)
+  * runs under TYPO3 6.2
