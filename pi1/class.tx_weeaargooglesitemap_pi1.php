@@ -256,7 +256,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 									$param["additionalParams"] .= '&tx_ttnews[year]=' . intval($ttnews->piVars['year']);
 								}
 
-								$link = $this->conf["domain"] . $this->cObj->typoLink($next, $param);
+								$link = $this->url . ltrim($this->cObj->typoLink($next, $param), '/');
 								$link = preg_replace("/<a href=\"(.*)\".*/", "\\1", $link);
 
 								$string = "   <loc>{$link}</loc>\n";
