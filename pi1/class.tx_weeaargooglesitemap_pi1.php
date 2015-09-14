@@ -181,13 +181,25 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 							$now_utime = time();
                             $pid_list = preg_replace('/[^0-9,]/', '', $this->conf["tt_news."]["single_page."]["{$no}."]["pid_list"]); // simple sanitization
                             
+                            // filter by archive state?
+                            $include_archived = true;
+                            $include_non_archived = true;
+							if (isset($this->conf["tt_news."]["single_page."]["$no."]["archive_mode"])) {
+                                $archive_mode = trim(strtoupper($this->conf["tt_news."]["single_page."]["$no."]["archive_mode"]));
+                                if ($archive_mode == 'ARCHIVED') {
+                                    $include_non_archived = false;
+                                } else if ($archive_mode == 'NON-ARCHIVED') {
+                                    $include_archived = false;
+                                }
+                            }
+                            
 							// Look in the Config: If a backpid is set, transfer this information to the $param array
 							if (isset($this->conf["tt_news."]["single_page."]["$no."]["backpid"])) {
 								$tt_news_backpid = $this->conf["tt_news."]["single_page."]["$no."]["backpid"];
 							} else {
 								$tt_news_backpid = "";
 							}
-
+                            
                             // get all categories
 							if (isset($this->conf["tt_news."]["single_page."]["$no."]["cat_id_list"])) {
 								// Ok, we must look, if the news is linked to the category
@@ -204,7 +216,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 								}
                                 
                                 // get all original language or untranslated news by categories
-								$res = $this->db->exec_SELECTquery("tt_news.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign", "tt_news, tt_news_cat_mm", "tt_news.l18n_parent = 0 and tt_news_cat_mm.uid_local = tt_news.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime')$sql_addon");
+								$res = $this->db->exec_SELECTquery("tt_news.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign, tt_news.archivedate", "tt_news, tt_news_cat_mm", "tt_news.l18n_parent = 0 and tt_news_cat_mm.uid_local = tt_news.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime')$sql_addon");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -214,7 +226,8 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                                 // get all translated news by translation parent's categories
                                 // has to use parent UID
                                 // has to also check parent visibility
-								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign", "tt_news, tt_news_cat_mm, tt_news as tt_news_parent", "tt_news_parent.uid = tt_news.l18n_parent and tt_news.l18n_parent != 0 and tt_news_cat_mm.uid_local = tt_news_parent.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')$sql_addon");
+                                // archive state is only checked against parent
+								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign, tt_news_parent.archivedate", "tt_news, tt_news_cat_mm, tt_news as tt_news_parent", "tt_news_parent.uid = tt_news.l18n_parent and tt_news.l18n_parent != 0 and tt_news_cat_mm.uid_local = tt_news_parent.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')$sql_addon");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -223,7 +236,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 							}
 							else {
                                 // get all original language or untranslated news
-								$res = $this->db->exec_SELECTquery("uid, datetime, sys_language_uid, tstamp, keywords", "tt_news", "tt_news.l18n_parent = 0 and pid in (" . $pid_list . ") and hidden != 1 and deleted != 1 and (starttime = 0 OR starttime <= '$now_utime') and (endtime = 0 OR endtime >= '$now_utime')");
+								$res = $this->db->exec_SELECTquery("uid, datetime, sys_language_uid, tstamp, keywords, archivedate", "tt_news", "tt_news.l18n_parent = 0 and pid in (" . $pid_list . ") and hidden != 1 and deleted != 1 and (starttime = 0 OR starttime <= '$now_utime') and (endtime = 0 OR endtime >= '$now_utime')");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -233,13 +246,30 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                                 // get all translated news
                                 // has to use parent UID
                                 // has to also check parent visibility
-								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords", "tt_news, tt_news as tt_news_parent", "tt_news.l18n_parent = tt_news_parent.uid and tt_news.l18n_parent != 0 and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')");
+                                // archive state is only checked against parent
+								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_parent.archivedate", "tt_news, tt_news as tt_news_parent", "tt_news.l18n_parent = tt_news_parent.uid and tt_news.l18n_parent != 0 and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
                                     $this->data["news"][$this->conf["tt_news."]["single_page."][$no]][] = $row;
                                 }
 							}
+                            
+                            // filter by archive state
+                            if (!$include_archived || !$include_non_archived) {
+                                $filtered_rows = array();
+                                
+                                foreach ($this->data["news"][$this->conf["tt_news."]["single_page."][$no]] as $row) {
+                                    $is_archived = ($row['archivedate'] != 0) && ($now_utime > $row['archivedate']);
+                                    if ($is_archived && $include_archived) {
+                                        $filtered_rows[] = $row;
+                                    } else if (!$is_archived && $include_non_archived) {
+                                        $filtered_rows[] = $row;
+                                    }
+                                }
+                                
+                                $this->data["news"][$this->conf["tt_news."]["single_page."][$no]] = $filtered_rows;
+                            }
 						}
 					}
 				}
