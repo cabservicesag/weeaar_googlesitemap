@@ -212,7 +212,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                                 }
                                 
                                 // get all translated news by translation parent's categories
-								$res = $this->db->exec_SELECTquery("tt_news.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign", "tt_news, tt_news_cat_mm, tt_news as tt_news_parent", "tt_news_parent.uid = tt_news.l18n_parent and tt_news.l18n_parent != 0 and tt_news_cat_mm.uid_local = tt_news_parent.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime')$sql_addon");
+								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign", "tt_news, tt_news_cat_mm, tt_news as tt_news_parent", "tt_news_parent.uid = tt_news.l18n_parent and tt_news.l18n_parent != 0 and tt_news_cat_mm.uid_local = tt_news_parent.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime')$sql_addon");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -220,8 +220,17 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                                 }
 							}
 							else {
-								$res = $this->db->exec_SELECTquery("uid, datetime, sys_language_uid, tstamp, keywords", "tt_news", "pid in (" . $pid_list . ") and hidden != 1 and deleted != 1 and (starttime = 0 OR starttime <= '$now_utime') and (endtime = 0 OR endtime >= '$now_utime')");
-#                     echo "all ($no)\n";							   		   							   							   
+                                // get all original language or untranslated news
+								$res = $this->db->exec_SELECTquery("uid, datetime, sys_language_uid, tstamp, keywords", "tt_news", "tt_news.l18n_parent = 0 and pid in (" . $pid_list . ") and hidden != 1 and deleted != 1 and (starttime = 0 OR starttime <= '$now_utime') and (endtime = 0 OR endtime >= '$now_utime')");
+                                
+                                while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+                                    $row[backpid] = $tt_news_backpid;
+                                    $this->data["news"][$this->conf["tt_news."]["single_page."][$no]][] = $row;
+                                }
+                                
+                                // get all translated news
+                                // has to use parent UID
+								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords", "tt_news, tt_news as tt_news_parent", "tt_news.l18n_parent = tt_news_parent.uid and tt_news.l18n_parent != 0 and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime')");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
