@@ -56,7 +56,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 	var $localizedIds = array();
 	var $languageParamIf0 = TRUE;
 	var $validCode = array('google', 'sitemap_org');
-	var $useNews = 0;
+	var $useNewsSchema = false;
 
 	/**
 	 * The main method of the PlugIn
@@ -174,12 +174,22 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 			$ttnews = t3lib_div::makeInstance('tx_ttnews');
 
 			if (is_array($this->conf["tt_news."]["single_page."]) && count($this->conf["tt_news."]["single_page."]) > 0) {
-				$this->useNews = 1;
 				foreach ($this->conf["tt_news."]["single_page."] as $no => $test) {
 					if (!strpos($no, ".")) {
 						if (isset($this->conf["tt_news."]["single_page."]["{$no}."]["pid_list"]) && $this->conf["tt_news."]["single_page."]["{$no}."]["pid_list"] != "") {
 							$now_utime = time();
                             $pid_list = preg_replace('/[^0-9,]/', '', $this->conf["tt_news."]["single_page."]["{$no}."]["pid_list"]); // simple sanitization
+                            
+                            // should news schema be used to annotate this news block for news crawlers?
+                            // only use if activated (news_schema = 1) and required tags have been entered
+                            // see: https://support.google.com/news/publisher/answer/74288?hl=en
+                            $block_uses_news_schema = isset($this->conf["tt_news."]["single_page."]["{$no}."]["news_schema"]) &&
+                                                      ($this->conf["tt_news."]["single_page."]["{$no}."]["news_schema"] == 1) &&
+                                                      isset($this->conf["tt_news."]["single_page."]["{$no}."]["news_schema."]["publication."]["name"]) &&
+                                                      (trim($this->conf["tt_news."]["single_page."]["{$no}."]["news_schema."]["publication."]["name"]) != '') &&
+                                                      isset($this->conf["tt_news."]["single_page."]["{$no}."]["news_schema."]["publication."]["language"]) &&
+                                                      (trim($this->conf["tt_news."]["single_page."]["{$no}."]["news_schema."]["publication."]["language"]) != '');
+                            $this->useNewsSchema |= $block_uses_news_schema;
                             
                             // filter by archive state?
                             $include_archived = true;
@@ -216,7 +226,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 								}
                                 
                                 // get all original language or untranslated news by categories
-								$res = $this->db->exec_SELECTquery("tt_news.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign, tt_news.archivedate", "tt_news, tt_news_cat_mm", "tt_news.l18n_parent = 0 and tt_news_cat_mm.uid_local = tt_news.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime')$sql_addon");
+								$res = $this->db->exec_SELECTquery("tt_news.uid, tt_news.title, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign, tt_news.archivedate", "tt_news, tt_news_cat_mm", "tt_news.l18n_parent = 0 and tt_news_cat_mm.uid_local = tt_news.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime')$sql_addon");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -227,7 +237,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                                 // has to use parent UID
                                 // has to also check parent visibility
                                 // archive state is only checked against parent
-								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign, tt_news_parent.archivedate", "tt_news, tt_news_cat_mm, tt_news as tt_news_parent", "tt_news_parent.uid = tt_news.l18n_parent and tt_news.l18n_parent != 0 and tt_news_cat_mm.uid_local = tt_news_parent.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')$sql_addon");
+								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.title, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_cat_mm.uid_foreign, tt_news_parent.archivedate", "tt_news, tt_news_cat_mm, tt_news as tt_news_parent", "tt_news_parent.uid = tt_news.l18n_parent and tt_news.l18n_parent != 0 and tt_news_cat_mm.uid_local = tt_news_parent.uid and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')$sql_addon");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -236,7 +246,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 							}
 							else {
                                 // get all original language or untranslated news
-								$res = $this->db->exec_SELECTquery("uid, datetime, sys_language_uid, tstamp, keywords, archivedate", "tt_news", "tt_news.l18n_parent = 0 and pid in (" . $pid_list . ") and hidden != 1 and deleted != 1 and (starttime = 0 OR starttime <= '$now_utime') and (endtime = 0 OR endtime >= '$now_utime')");
+								$res = $this->db->exec_SELECTquery("uid, title, datetime, sys_language_uid, tstamp, keywords, archivedate", "tt_news", "tt_news.l18n_parent = 0 and pid in (" . $pid_list . ") and hidden != 1 and deleted != 1 and (starttime = 0 OR starttime <= '$now_utime') and (endtime = 0 OR endtime >= '$now_utime')");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -247,7 +257,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                                 // has to use parent UID
                                 // has to also check parent visibility
                                 // archive state is only checked against parent
-								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_parent.archivedate", "tt_news, tt_news as tt_news_parent", "tt_news.l18n_parent = tt_news_parent.uid and tt_news.l18n_parent != 0 and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')");
+								$res = $this->db->exec_SELECTquery("tt_news_parent.uid, tt_news.title, tt_news.datetime, tt_news.sys_language_uid, tt_news.tstamp, tt_news.keywords, tt_news_parent.archivedate", "tt_news, tt_news as tt_news_parent", "tt_news.l18n_parent = tt_news_parent.uid and tt_news.l18n_parent != 0 and tt_news.pid in (" . $pid_list . ") and tt_news.hidden != 1 and tt_news.deleted != 1 and (tt_news.starttime = 0 OR tt_news.starttime <= '$now_utime') and (tt_news.endtime = 0 OR tt_news.endtime >= '$now_utime') and tt_news_parent.hidden != 1 and tt_news_parent.deleted != 1 and (tt_news_parent.starttime = 0 OR tt_news_parent.starttime <= '$now_utime') and (tt_news_parent.endtime = 0 OR tt_news_parent.endtime >= '$now_utime')");
                                 
                                 while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
                                     $row[backpid] = $tt_news_backpid;
@@ -270,6 +280,15 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                                 
                                 $this->data["news"][$this->conf["tt_news."]["single_page."][$no]] = $filtered_rows;
                             }
+                            
+                            // copy configured news schema meta data
+                            // (configuration may not be uniform if multiple single_page entries have been defined)
+                            if ($block_uses_news_schema) {
+                                $num_rows = count($this->data["news"][$this->conf["tt_news."]["single_page."][$no]]);
+                                for ($i=0; $i<$num_rows; $i++) {
+                                    $this->data["news"][$this->conf["tt_news."]["single_page."][$no]][$i]['news_schema'] = $this->conf["tt_news."]["single_page."]["{$no}."]["news_schema."];
+                                }
+                            }
 						}
 					}
 				}
@@ -278,7 +297,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 					foreach ($this->data["news"] as $singlePid => $array) {
 						foreach ($array as $row) {
 							$counter3++;
-							$ttnews->getHrDateSingle($row['datetime']);
+							//$ttnews->getHrDateSingle($row['datetime']);
 
 							if ($row[backpid]) {
 								$tt_news_backpid = "&tx_ttnews[backPid]=" . $row[backpid];
@@ -324,15 +343,64 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 								$string .= "   <priority>0.5</priority>\n";
 
 								/* news sitemap */
-								if ($this->defaultCode == 'google') {
-									$string .= "   <news:news>\n";
-									$string .= "      <news:publication_date>" . gmdate("Y-m-d\TH:i:s\Z", $row["tstamp"]) . "</news:publication_date>\n";
-
-									if ($row['keywords'] != '') {
-										$string .= "  	   <news:keywords>" . htmlspecialchars($row['keywords']) . "</news:keywords>\n";
-										//			  	<news:stock_tickers>MSFT, NYSE:HD</news:stock_tickers>
-									}
-									$string .= "   </news:news>\n";
+                                if ($this->useNewsSchema && isset($row['news_schema'])) {
+                                    // check news age
+                                    // Google says we should stop listing news 2 days after publication
+                                    $max_age_days = (isset($row['news_schema']['max_age_days']) ? intval($row['news_schema']['max_age_days']) : 2);
+                                    $age_days = ($now_utime - $row['datetime']) / 86400.0;
+                                    $is_older_than_allowed = ($age_days > $max_age_days);
+                                    
+                                    if (!$is_older_than_allowed) {
+                                        // find language
+                                        // start with default and override with sys_language_uid mapping
+                                        $language = $row['news_schema']['publication.']['language'];
+                                        if (isset($row['news_schema']['publication.']['language.'])) {
+                                            if (isset($row['news_schema']['publication.']['language.'][''.$row['sys_language_uid']]) && (trim($row['news_schema']['publication.']['language.'][''.$row['sys_language_uid']]) != '')) {
+                                                $language = trim($row['news_schema']['publication.']['language.'][''.$row['sys_language_uid']]);
+                                            }
+                                        }
+                                        
+                                        $string .= "   <news:news>\n";
+                                        
+                                        $string .= "      <news:publication>\n";
+                                        $string .= "         <news:name>" . htmlspecialchars($row['news_schema']['publication.']['name']) . "</news:name>\n";
+                                        $string .= "         <news:language>" . htmlspecialchars($language) . "</news:language>\n";
+                                        $string .= "      </news:publication>\n";
+                                        
+                                        $string .= "      <news:publication_date>" . gmdate("Y-m-d\TH:i:s\Z", $row["datetime"]) . "</news:publication_date>\n";
+                                        
+                                        $string .= "      <news:title>" . htmlspecialchars($row["title"]) . "</news:title>\n";
+                                        
+                                        if (isset($row['news_schema']['access'])) {
+                                            $string .= '      <news:access>' . htmlspecialchars($row['news_schema']['access']) . "</news:access>\n";
+                                        }
+                                        
+                                        if (isset($row['news_schema']['genres'])) {
+                                            $string .= '      <news:genres>' . htmlspecialchars($row['news_schema']['genres']) . "</news:genres>\n";
+                                        }
+                                        
+                                        // find keywords to use
+                                        // 1) start with default or empty string
+                                        $keywords = isset($row['news_schema']['keywords_default']) ? $row['news_schema']['keywords_default'] : '';
+                                        // 2) replace by news keywords if set
+                                        if ($row['keywords'] != '') {
+                                            $keywords = $row['keywords'];
+                                        }
+                                        // 3) allow override by config (including empty strings)
+                                        if (isset($row['news_schema']['keywords_override'])) {
+                                            $keywords = $row['news_schema']['keywords_override'];
+                                        }
+                                        $keywords = trim($keywords);
+                                        if ($keywords != '') {
+                                            $string .= "      <news:keywords>" . htmlspecialchars($keywords) . "</news:keywords>\n";
+                                        }
+                                        
+                                        if (isset($row['news_schema']['stock_tickers'])) {
+                                            $string .= '      <news:stock_tickers>' . htmlspecialchars($row['news_schema']['stock_tickers']) . "</news:stock_tickers>\n";
+                                        }
+                                        
+                                        $string .= "   </news:news>\n";
+                                    }
 								}
 								$this->tRows[] = "<url>\n{$string}</url>\n";
 							}
@@ -462,14 +530,14 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 	function getHeader() {
 		switch ($this->defaultCode) {
 			case "sitemap_org":
-				if ($this->useNews == 1) {
+				if ($this->useNewsSchema == 1) {
 					return "<urlset \n\t\t xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" \n\t\txmlns:news=\"http://www.google.com/schemas/sitemap-news/0.9\">";
 				} else {
 					return "<urlset \n\t\txmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">";
 				}
 				break;
 			default:
-				if ($this->useNews == 1) {
+				if ($this->useNewsSchema == 1) {
 					return "<urlset 
 										xmlns=\"http://www.google.com/schemas/sitemap/0.84\"
 										xmlns:news=\"http://www.google.com/schemas/sitemap-news/0.9\"
