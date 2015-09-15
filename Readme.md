@@ -22,26 +22,28 @@ New Features
       * `news_schema.access` (optional) - subscription/registration required? assumed free if missing; see [Google help](https://support.google.com/news/publisher/answer/74288) for details
       * `news_schema.genres` (optional) - type of content; see [Google help](https://support.google.com/news/publisher/answer/93992) for details
       * `news_schema.stock_tickers` (optional) - related stock exchanges & ticker IDs; see [Google help](https://support.google.com/news/publisher/answer/74288) for details
-    * full example:
-      ```single_page.1 {
-        news_schema = 1
-        news_schema {
-            publication {
-                name = Example Magazine
-                language = en
-                language {
-                    0 = en
-                    1 = de
-                }
+    * example:
+```
+single_page.1 {
+    news_schema = 1
+    news_schema {
+        publication {
+            name = Example Magazine
+            language = en
+            language {
+                0 = en
+                1 = de
             }
-            access = Registration
-            genres = UserGenerated
-            keywords_default = Health
-            #keywords_override = Health
-            #stock_tickers = TEST:A
-            max_age_days = 5
         }
-    }```
+        access = Registration
+        genres = UserGenerated
+        keywords_default = Health
+        #keywords_override = Health
+        #stock_tickers = TEST:A
+        max_age_days = 5
+    }
+}
+```
 
 Fixes
 -----
