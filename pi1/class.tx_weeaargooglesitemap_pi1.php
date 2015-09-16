@@ -72,12 +72,12 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 
 		$this->languageVar = (isset($this->conf["languageVar"]) ? $this->conf["languageVar"] : "L");
 
-		$this->showLanguages = (isset($this->conf["showLanguages"])) ? split(",", $this->conf["showLanguages"]) : array(0);
+		$this->showLanguages = (isset($this->conf["showLanguages"])) ? explode(",", $this->conf["showLanguages"]) : array(0);
 
 		$this->languageParamIf0 = (isset($this->conf['languageParamIf0'])) ? (int) $this->conf['languageParamIf0'] : TRUE;
 
 		if (isset($this->conf['allowedDoktypes'])) {
-			$this->allowedDoktypes = split(",", $this->conf['allowedDoktypes']);
+			$this->allowedDoktypes = explode(",", $this->conf['allowedDoktypes']);
 		}
 
 		$this->getData();
@@ -98,7 +98,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 
 		$this->url = $this->give_domain();
 
-		foreach (split(",", $this->pid_list) as $pid) {
+		foreach (explode(",", $this->pid_list) as $pid) {
 			$page = $GLOBALS["TSFE"]->sys_page->getPage($pid);
 			if (in_array("0", $this->showLanguages)) {
 				$this->generateItem($page);
@@ -269,12 +269,14 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
                             if (!$include_archived || !$include_non_archived) {
                                 $filtered_rows = array();
                                 
-                                foreach ($this->data["news"][$this->conf["tt_news."]["single_page."][$no]] as $row) {
-                                    $is_archived = ($row['archivedate'] != 0) && ($now_utime > $row['archivedate']);
-                                    if ($is_archived && $include_archived) {
-                                        $filtered_rows[] = $row;
-                                    } else if (!$is_archived && $include_non_archived) {
-                                        $filtered_rows[] = $row;
+                                if (is_array($rows = $this->data["news"][$this->conf["tt_news."]["single_page."][$no]])) {
+                                    foreach ($rows as $row) {
+                                        $is_archived = ($row['archivedate'] != 0) && ($now_utime > $row['archivedate']);
+                                        if ($is_archived && $include_archived) {
+                                            $filtered_rows[] = $row;
+                                        } else if (!$is_archived && $include_non_archived) {
+                                            $filtered_rows[] = $row;
+                                        }
                                     }
                                 }
                                 
@@ -323,7 +325,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 							}
 
 							if ($allowed == 1) {
-								$disabledParameter = split(",", $this->conf["tt_news."]["disabledParameter"]);
+								$disabledParameter = explode(",", $this->conf["tt_news."]["disabledParameter"]);
 
 								if ($ttnews->piVars['day'] && !in_array("day", $disabledParameter)) {
 									$param["additionalParams"] .= '&tx_ttnews[day]=' . intval($ttnews->piVars['day']);
@@ -412,7 +414,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 	}
 
 	function check_cat_ids($ids, $id) {
-		$ids = split(",", $ids);
+		$ids = explode(",", $ids);
 
 		if (count($ids) > 0) {
 			foreach ($ids as $cat_id) {
