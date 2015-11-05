@@ -451,7 +451,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 	}
 
 	function generateItem($pages_row, $id_name = 'uid') {
-		if (!$this->data[$pages_row[$id_name]][0] == 1 && count($pages_row) > 0 && (!in_array($pages_row[$id_name], $this->usedSites) || isset($pages_row["sys_language_uid"])) && (in_array($pages_row['doktype'], $this->allowedDoktypes) || isset($pages_row["sys_language_uid"]) ) && !in_array($pages_row[$id_name], $this->excludedPages)) {
+		if (!$this->data[$pages_row[$id_name]][0] == 1 && count($pages_row) > 0 && (!in_array($pages_row[$id_name], $this->usedSites) || isset($pages_row["sys_language_uid"])) && (in_array($pages_row['doktype'], $this->allowedDoktypes) || isset($pages_row["sys_language_uid"]) ) && !in_array($pages_row[$id_name], $this->excludedPages) && !$pages_row['deleted']) {
 			$langID = (isset($pages_row["sys_language_uid"])) ? $pages_row["sys_language_uid"] : $this->sys_language_uid;
 
 			$link = (substr($link, 0, 1) == '/') ? substr($link, 1) : $link;
