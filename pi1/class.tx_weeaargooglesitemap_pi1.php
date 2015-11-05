@@ -337,7 +337,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 							$allowed = 0;
 
 							if (isset($row["sys_language_uid"]) && in_array($row["sys_language_uid"], $this->showLanguages)) {
-								if ($row["sys_language_uid"] != 0) {
+								if ($this->languageParamIf0 || ($row["sys_language_uid"] != 0)) {
 									$param["additionalParams"] .= "&{$this->languageVar}={$row["sys_language_uid"]}";
 								}
 								$allowed = 1;
