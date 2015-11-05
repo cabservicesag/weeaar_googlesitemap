@@ -9,6 +9,7 @@ New Features
 
   * tt_news single page views can now be optionally kept on `sitemap.xml` output (e.g. for dual-mode pages which contain both a `LIST` and `SINGLE` view on the same page and toggle the active tt_news mode based upon parameters passed on URL). Can be used by setting new parameter `tt_news.single_page.*.keepListedAsPage = 1`. See changeset `cbe4a3fe159b09912fe777ec7ad618ce8a9be918` for details.
   * tt_news entries can optionally be filtered by archived/non-archived state. If filtering is desired, set `archive_mode = archived` or `archive_mode = non-archived` on a single view configuration
+  * tt_news records can be searched recursively from the given `pid_list` by setting `recursive = <recursion depth>` on the `single_page` configuration
   * news schema is no longer active by default as it is intended for actual news like magazine articles or press releases which if not the case for every tt_news article
     * enabled via `news_schema = 1` on `single_page` configuration
     * configuration allows setting all tags as described by [Google](https://support.google.com/news/publisher/answer/74288):
