@@ -1,5 +1,6 @@
 2015-11-05 Daniel Neugebauer <dneuge@glutrot.de>
 	* new parameter tt_news.single_page.*.recursive to allow getting news recursively
+	* news now honor languageParamIf0 setting
 
 2015-03-23 Daniel Neugebauer <dneuge@glutrot.de>
 	* compatibility with TYPO3 6.2
