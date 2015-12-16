@@ -148,7 +148,7 @@ class tx_weeaargooglesitemap_pi1 extends tslib_pibase {
 		}
 
 		if (count($this->localizedIds) > 0) {
-			$res = $this->db->exec_SELECTquery("*", "pages_language_overlay", "pid in (" . implode(",", $this->localizedIds) . ") and sys_language_uid in (" . implode(",", $this->showLanguages) . ")");
+			$res = $this->db->exec_SELECTquery("*", "pages_language_overlay", "pid in (" . implode(",", $this->localizedIds) . ") and sys_language_uid in (" . implode(",", $this->showLanguages) . ") and hidden = 0");
 			while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 				$this->generateItem($row, 'pid');
 			}
